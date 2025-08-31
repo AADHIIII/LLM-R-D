@@ -25,43 +25,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: web_interface/frontend/package-lock.json
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
 
       - name: Install frontend dependencies
         working-directory: web_interface/frontend
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Build frontend
         working-directory: web_interface/frontend
         env:
-          REACT_APP_API_URL: https://your-username.github.io/llm-optimization-platform/api
-          PUBLIC_URL: /llm-optimization-platform
+          REACT_APP_API_URL: /api
+          PUBLIC_URL: /LLM-R-D
+          REACT_APP_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: npm run build
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Create API build
-        run: |
-          mkdir -p dist/api
-          cp -r api dist/
-          cp -r utils dist/
-          cp -r database dist/
-          cp -r evaluator dist/
-          cp -r fine_tuning dist/
-          cp -r monitoring dist/
-          cp -r config dist/
-          cp requirements.txt dist/
-          cp run_api.py dist/
-          
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
@@ -69,8 +50,11 @@ jobs:
         run: |
           mkdir -p _site
           cp -r web_interface/frontend/build/* _site/
-          mkdir -p _site/api
-          echo '{"message": "LLM Optimization Platform API", "status": "GitHub Pages Demo", "note": "Full API requires server deployment"}' > _site/api/index.json
+          
+          # Create a simple API mock for demo
+          mkdir -p _site/api/v1
+          echo '{"message": "LLM Optimization Platform", "status": "running", "version": "1.0.0"}' > _site/api/v1/health
+          echo '{"models": [{"id": "gemini-1.5-flash", "name": "Gemini 1.5 Flash", "provider": "Google", "status": "available"}]}' > _site/api/v1/models
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import PromptInput from '../components/PromptInput';
 import ModelSelector from '../components/ModelSelector';
 import ComparisonView from '../components/ComparisonView';
+import { getGeminiService } from '../services/geminiService';
 
 const PromptTesting: React.FC = () => {
   const [prompts, setPrompts] = useState<string[]>([]);

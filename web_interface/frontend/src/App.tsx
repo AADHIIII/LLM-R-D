@@ -7,6 +7,7 @@ import FineTuning from './pages/FineTuning';
 import PromptTesting from './pages/PromptTesting';
 import Results from './pages/Results';
 import Analytics from './pages/Analytics';
+import Demo from './pages/Demo';
 
 function App() {
   return (
@@ -14,7 +15,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
+            <Route index element={<Demo />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="fine-tuning" element={<FineTuning />} />
             <Route path="prompt-testing" element={<PromptTesting />} />
             <Route path="results" element={<Results />} />
