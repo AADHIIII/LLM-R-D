@@ -54,7 +54,7 @@ class GeminiClient:
     def generate_text(
         self,
         prompt: str,
-        model: str = 'gemini-pro',
+        model: str = 'gemini-1.5-flash',
         max_tokens: int = 100,
         temperature: float = 0.7,
         top_p: float = 1.0,
@@ -135,7 +135,7 @@ class GeminiClient:
     def generate_batch(
         self,
         prompts: List[str],
-        model: str = 'gemini-pro',
+        model: str = 'gemini-1.5-flash',
         max_tokens: int = 100,
         temperature: float = 0.7,
         top_p: float = 1.0,
@@ -297,7 +297,7 @@ class GeminiClient:
             Cost in USD
         """
         if model not in self.pricing:
-            model = 'gemini-pro'  # Default pricing
+            model = 'gemini-1.5-flash'  # Default pricing
         
         pricing = self.pricing[model]
         

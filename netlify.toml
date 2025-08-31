@@ -1,0 +1,27 @@
+[build]
+  base = "web_interface/frontend"
+  publish = "web_interface/frontend/build"
+  command = "npm run build"
+
+[build.environment]
+  REACT_APP_API_URL = "/.netlify/functions/api"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[functions]
+  directory = "netlify/functions"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"

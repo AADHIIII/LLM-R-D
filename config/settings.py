@@ -24,14 +24,22 @@ class Settings(BaseSettings):
     # API Keys
     openai_api_key: Optional[str] = Field(default=None, description="OpenAI API Key")
     anthropic_api_key: Optional[str] = Field(default=None, description="Anthropic API Key")
+    gemini_api_key: Optional[str] = Field(default=None, description="Gemini API Key")
     
     # Database Configuration
     database_url: str = Field(default="sqlite:///llm_optimization.db", description="Database URL")
+    postgres_db: Optional[str] = Field(default=None, description="PostgreSQL Database Name")
+    postgres_user: Optional[str] = Field(default=None, description="PostgreSQL User")
+    postgres_password: Optional[str] = Field(default=None, description="PostgreSQL Password")
+    
+    # Redis Configuration
+    redis_password: Optional[str] = Field(default=None, description="Redis Password")
     
     # Flask Configuration
     flask_env: str = Field(default="development", description="Flask Environment")
     flask_debug: bool = Field(default=True, description="Flask Debug Mode")
-    flask_secret_key: str = Field(default="dev-secret-key", description="Flask Secret Key")
+    secret_key: str = Field(default="dev-secret-key", description="Flask Secret Key")
+    jwt_secret_key: str = Field(default="dev-jwt-secret", description="JWT Secret Key")
     
     # Storage Paths
     model_storage_path: str = Field(default="./models", description="Model Storage Path")
@@ -50,6 +58,12 @@ class Settings(BaseSettings):
     api_host: str = Field(default="0.0.0.0", description="API Host")
     api_port: int = Field(default=5000, description="API Port")
     
+    # CORS Configuration
+    cors_origins: Optional[str] = Field(default=None, description="CORS Origins")
+    
+    # Monitoring Configuration
+    grafana_password: Optional[str] = Field(default=None, description="Grafana Password")
+    
     # Streamlit Configuration
     streamlit_port: int = Field(default=8501, description="Streamlit Port")
     
@@ -58,11 +72,14 @@ class Settings(BaseSettings):
             env_file=".env",
             case_sensitive=False,
             env_prefix="",
+            extra="ignore",  # Ignore extra fields
+            protected_namespaces=()  # Allow model_ prefix
         )
     else:
         class Config:
             env_file = ".env"
             case_sensitive = False
+            extra = "ignore"
 
 
 class TrainingConfig:

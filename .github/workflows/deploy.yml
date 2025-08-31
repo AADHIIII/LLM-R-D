@@ -1,0 +1,89 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: web_interface/frontend/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install frontend dependencies
+        working-directory: web_interface/frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: web_interface/frontend
+        env:
+          REACT_APP_API_URL: https://your-username.github.io/llm-optimization-platform/api
+          PUBLIC_URL: /llm-optimization-platform
+        run: npm run build
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create API build
+        run: |
+          mkdir -p dist/api
+          cp -r api dist/
+          cp -r utils dist/
+          cp -r database dist/
+          cp -r evaluator dist/
+          cp -r fine_tuning dist/
+          cp -r monitoring dist/
+          cp -r config dist/
+          cp requirements.txt dist/
+          cp run_api.py dist/
+          
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Create deployment structure
+        run: |
+          mkdir -p _site
+          cp -r web_interface/frontend/build/* _site/
+          mkdir -p _site/api
+          echo '{"message": "LLM Optimization Platform API", "status": "GitHub Pages Demo", "note": "Full API requires server deployment"}' > _site/api/index.json
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

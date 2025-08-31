@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "name": "llm-optimization-platform",
+  "builds": [
+    {
+      "src": "web_interface/frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    },
+    {
+      "src": "run_api.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/run_api.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/web_interface/frontend/build/$1"
+    }
+  ],
+  "env": {
+    "PYTHONPATH": ".",
+    "FLASK_ENV": "production"
+  },
+  "functions": {
+    "run_api.py": {
+      "runtime": "python3.11"
+    }
+  }
+}

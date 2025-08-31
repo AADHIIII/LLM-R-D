@@ -1,78 +1,50 @@
-# Production Dockerfile with security hardening
-FROM python:3.11-slim as base
+# Multi-stage build for production deployment
+FROM node:18-alpine AS frontend-builder
 
-# Security: Update packages and install security updates
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends \
+WORKDIR /app/frontend
+COPY web_interface/frontend/package*.json ./
+RUN npm ci --only=production
+
+COPY web_interface/frontend/ ./
+ENV REACT_APP_API_URL=/api/v1
+RUN npm run build
+
+# Python backend stage
+FROM python:3.11-slim AS backend
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
     gcc \
-    g++ \
-    git \
     curl \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user with specific UID/GID
-RUN groupadd -r -g 1001 appuser && \
-    useradd -r -u 1001 -g appuser -m -d /home/appuser -s /bin/bash appuser
-
-# Set environment variables for production
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    FLASK_ENV=production \
-    PYTHONPATH=/app
-
-# Set working directory
 WORKDIR /app
 
-# Copy requirements first for better caching
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
-
-# Install Python dependencies with security considerations
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip check
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY --chown=appuser:appuser . .
+COPY . .
+COPY --from=frontend-builder /app/frontend/build ./web_interface/frontend/build
 
-# Create necessary directories with proper permissions
-RUN mkdir -p logs models datasets /tmp/app && \
-    chown -R appuser:appuser /app /tmp/app && \
-    chmod -R 755 /app && \
-    chmod -R 700 /app/logs /app/models /app/datasets
+# Create necessary directories
+RUN mkdir -p logs models datasets
 
-# Remove unnecessary files and set secure permissions
-RUN find /app -name "*.pyc" -delete && \
-    find /app -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true && \
-    chmod -R o-rwx /app
+# Set environment variables
+ENV FLASK_ENV=production
+ENV PYTHONPATH=/app
+ENV PORT=8080
 
-# Security: Remove package managers and build tools
-RUN apt-get remove -y gcc g++ git && \
-    apt-get autoremove -y && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Expose port
+EXPOSE 8080
 
-# Switch to non-root user
-USER appuser
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
 
-# Set secure umask
-RUN echo "umask 027" >> /home/appuser/.bashrc
+# Start script
+COPY start-production.sh .
+RUN chmod +x start-production.sh
 
-# Expose port (non-privileged)
-EXPOSE 5000
-
-# Add labels for metadata
-LABEL maintainer="LLM Platform Team" \
-      version="1.0.0" \
-      description="LLM Optimization Platform - Production Backend" \
-      security.scan="enabled"
-
-# Health check with timeout
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:5000/api/v1/health || exit 1
-
-# Use exec form for better signal handling
-CMD ["python", "-m", "gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--worker-class", "sync", "--timeout", "120", "--keepalive", "5", "--max-requests", "1000", "--max-requests-jitter", "100", "--preload", "api.app:create_app()"]
+CMD ["./start-production.sh"]
