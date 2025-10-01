@@ -2,6 +2,9 @@
 
 A comprehensive platform for Large Language Model research, development, fine-tuning, and optimization. This platform provides tools for prompt testing, model comparison, fine-tuning workflows, cost tracking, and performance monitoring.
 
+<img width="1462" height="783" alt="Screenshot 2025-09-30 at 8 43 16 PM" src="https://github.com/user-attachments/assets/6f17d25c-b753-493d-8acb-566f796bfb6b" />
+
+
 ## 🚀 Features
 
 ### Core Capabilities
