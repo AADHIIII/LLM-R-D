@@ -261,18 +261,17 @@ class AuthService:
     def get_user_permissions(self, user_id: str) -> List[str]:
         """
         Get all permissions for user.
-        
+
         Args:
             user_id: User ID
-            
+
         Returns:
             List of permission strings
         """
         user = self.user_repo.get_by_id(user_id)
         if not user:
             return []
-        
-        # Get role-based permissions
+
         role_permissions = {
             UserRole.ADMIN: [
                 'user:create', 'user:read', 'user:update', 'user:delete',
@@ -294,8 +293,21 @@ class AuthService:
                 'model:read', 'experiment:read'
             ]
         }
-        
+
         return role_permissions.get(user.role, [])
+
+    def get_user_api_keys(self, user_id: str) -> List[Dict[str, Any]]:
+        """
+        Get all API keys for a user.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            List of API key dictionaries
+        """
+        api_keys = self.api_key_repo.get_by_user(user_id)
+        return [key.to_dict() for key in api_keys]
     
     def _validate_user_input(self, username: str, email: str, password: str) -> Optional[str]:
         """

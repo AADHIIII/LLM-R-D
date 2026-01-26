@@ -29,10 +29,12 @@ def setup_validation_middleware(app: Flask) -> None:
     def validate_content_type() -> None:
         """Validate content type for POST/PUT requests."""
         if request.method in ['POST', 'PUT']:
-            if not request.is_json and request.content_length and request.content_length > 0:
+            content_type = request.content_type or ''
+            is_multipart = content_type.startswith('multipart/form-data')
+            if not request.is_json and not is_multipart and request.content_length and request.content_length > 0:
                 return jsonify({
                     'error': 'validation_error',
-                    'message': 'Content-Type must be application/json for POST/PUT requests'
+                    'message': 'Content-Type must be application/json or multipart/form-data for POST/PUT requests'
                 }), 400
     
     @app.before_request

@@ -1,14 +1,13 @@
 """
 Authentication API endpoints.
 """
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify
 from datetime import datetime
 import logging
 
 from ..services.auth_service import AuthService
 from ..models.user import UserRole
 from ..middleware.auth_middleware import require_auth, get_current_user
-from utils.exceptions import ValidationError
 
 
 logger = logging.getLogger(__name__)
@@ -247,13 +246,11 @@ def list_api_keys():
     try:
         current_user = get_current_user()
         auth_service = AuthService()
-        
-        # Get user's API keys (implementation depends on repository)
-        # For now, return empty list
+
+        api_keys = auth_service.get_user_api_keys(current_user['user_id'])
         return jsonify({
             'success': True,
-            'api_keys': [],
-            'message': 'API key listing not yet implemented'
+            'api_keys': api_keys
         }), 200
         
     except Exception as e:
